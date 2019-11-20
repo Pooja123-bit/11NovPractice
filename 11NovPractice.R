@@ -110,3 +110,38 @@ ggmap(la.map)+geom_point(data=df[df$species=='Black Drum',],aes(x=lon,
 
 ggmap(la.map)+geom_point(data=df[df$species=='Black Drum',],aes(x=lon, 
               y=lat, color=num))+ scale_color_gradientn(colors=terrain.colors(10))
+
+#11-20-2019------
+#Task 1
+#Using the fish or phy data set make a map of the sampling locations
+load("ost2014_phy_t.Robj")
+library(tidyverse)
+install.packages('ggmap')
+install.packages('osmdata')
+library(ggmap)
+library(osmdata)
+library(ggplot2)
+
+bb=c(left=min(df$lon), bottom=min(df$lat), right=max(df$lon), top=max(df$lat))
+la.map=get_stamenmap(bbox=bb, zoom=8, map='terrain-background')
+ggmap(la.map) + geom_point(data=df, aes(x=lon, y=lat))
+
+#Task 2
+#Using the LDWF make a map of every species that was caught at more than 15 sampling events
+library(plyr)
+library(dplyr)
+library(stringr)
+
+df= read_csv('LDWF2008seine.csv')
+#sp=df%>%group_by(site) %>% summarise(count = count(species))
+#sa=df%>%group_by(species) %>% summarise(count = length(site))
+OR
+sp=df%>%group_by(species) %>% dplyr::summarise(count=n())
+df=merge(df,sp,by='species')
+head(df)
+
+#merge count data with overall data
+df15=df[df$count>=15,]
+view(df)
+
+df[order(-df$count),]
