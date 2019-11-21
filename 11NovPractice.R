@@ -121,8 +121,16 @@ install.packages('osmdata')
 library(ggmap)
 library(osmdata)
 library(ggplot2)
+load("fish_data.Rdata")
 
-bb=c(left=min(df$lon), bottom=min(df$lat), right=max(df$lon), top=max(df$lat))
+f<-fish
+aa=c(left=min(df$lon)-0.2, bottom=min(df$lat)-0.2, right=max(df$lon)-0.2, 
+     top=max(df$lat)-0.2)
+
+
+df<-phy_t
+bb=c(left=min(df$lon)-0.2, bottom=min(df$lat)-0.2, right=max(df$lon)-0.2, 
+     top=max(df$lat)-0.2)
 la.map=get_stamenmap(bbox=bb, zoom=8, map='terrain-background')
 ggmap(la.map) + geom_point(data=df, aes(x=lon, y=lat))
 
