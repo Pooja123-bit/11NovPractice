@@ -124,15 +124,19 @@ library(ggplot2)
 load("fish_data.Rdata")
 
 f<-fish
-aa=c(left=min(df$lon)-0.2, bottom=min(df$lat)-0.2, right=max(df$lon)-0.2, 
-     top=max(df$lat)-0.2)
+df=read_csv('LDWF2008seine.csv')
 
+bb=c(left=min(df$lon),bottom=min(df$lat),right=max(df$lon),top=max(df$lat))
+map=get_stamenmap(bbox=bb,zoom=8,map='terrain-background')
+ggmap(map)+geom_point(data=df,aes(x=lon,y=lat))
 
-df<-phy_t
-bb=c(left=min(df$lon)-0.2, bottom=min(df$lat)-0.2, right=max(df$lon)-0.2, 
-     top=max(df$lat)-0.2)
-la.map=get_stamenmap(bbox=bb, zoom=8, map='terrain-background')
-ggmap(la.map) + geom_point(data=df, aes(x=lon, y=lat))
+#or
+
+bbb=c(left=min(f$parcel.start.lon)-0.2,bottom=min(f$parcel.start.lat)-0.2,
+      right=max(f$parcel.start.lon)+0.2,top=max(f$parcel.start.lat)+0.2)
+la.map=get_stamenmap(bbox=bbb,zoom=8,map='terrain-background')
+ggmap(la.map)+geom_point(data=f,aes(x=parcel.start.lon,y=parcel.start.lat))
+
 
 #Task 2
 #Using the LDWF make a map of every species that was caught at more than 15 sampling events
@@ -140,16 +144,53 @@ library(plyr)
 library(dplyr)
 library(stringr)
 
-df= read_csv('LDWF2008seine.csv')
-#sp=df%>%group_by(site) %>% summarise(count = count(species))
-#sa=df%>%group_by(species) %>% summarise(count = length(site))
-OR
-sp=df%>%group_by(species) %>% dplyr::summarise(count=n())
-df=merge(df,sp,by='species')
-head(df)
+Task 2-----
+  #Using the LDWF data set make a map of every species
+  # That was caught at more than 15 sampling events
+  
+library(plyr)
+library(dplyr)
+library(tidyverse)
+library(ggmap)
+
+df=read_csv('LDWF2008seine.csv')
+#sp=df %>% group_by(site) %>% summarise(count=count(species))
+#sa=df %>% group_by(species) %>% summarise(count=length(site))
+
+#include dplyr:: in summarise because 2 packages have thesame function.
+#If i load only plyr then error will not occur
+sp=df %>% group_by(species) %>% dplyr::summarise(count=n())
+head(sp)
 
 #merge count data with overall data
-df15=df[df$count>=15,]
-view(df)
 
+df=merge(df, sp, by='species')
+head(df)
+
+
+df15=df[df$count>=15,]
+view(df15)
 df[order(-df$count),]
+sp[order(-sp$count),]
+
+
+xx=df %>% group_by(lat, lon, site) %>% dplyr::summarise(count=n())
+xx
+
+bb=c(left=min(df15$lon)-0.2,bottom=min(df15$lat)-0.2,
+     right=max(df15$lon)+0.2,top=max(df15$lat)+0.2)
+species_map=get_stamenmap(bbox=bb,zoom=8,
+                          map='terrain-background')
+ddply(.data=df15, .variable="species", function(x){
+  name=unique(x$species)
+  
+  pl = ggmap(species_map)+
+    geom_point(data=df15,aes(x=lon,y=lat))+
+    ggtitle(name)
+  
+  
+  ggsave(filename =paste0(name,'.tiff'),
+         plot=pl,width=4,height = 3,units='in',
+         dpi=600,compression='lzw')
+},.progress="text")
+
